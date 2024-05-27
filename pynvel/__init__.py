@@ -11,8 +11,22 @@ import sys
 import toml
 import numpy as np
 
-from pynvel._version import __version__,__version_tuple__
 from pynvel.volume_height import calc_volume_height
+
+if sys.version_info[:2] >= (3, 8):
+    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
+    from importlib.metadata import PackageNotFoundError, _version  # pragma: no cover
+else:
+    from importlib_metadata import PackageNotFoundError, _version  # pragma: no cover
+
+try:
+    # Change here if project is renamed and does not equal the package name
+    dist_name = "PyFVS"
+    __version__ = _version(dist_name)
+except PackageNotFoundError:  # pragma: no cover
+    __version__ = "unknown"
+finally:
+    del _version, PackageNotFoundError
 
 def warn(x):
     print(x)
