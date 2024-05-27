@@ -11,7 +11,7 @@ import sys
 import toml
 import numpy as np
 
-#from pynvel._version import __version__,__version_tuple__
+from pynvel._version import __version__,__version_tuple__
 from pynvel.volume_height import calc_volume_height
 
 def warn(x):
