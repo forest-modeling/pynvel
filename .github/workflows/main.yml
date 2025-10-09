@@ -65,6 +65,7 @@ jobs:
         name: pynvel-${{ runner.os }}-py${{ matrix.python-version }}-wheels
         path: dist/*.whl
         if-no-files-found: warn
+        overwrite: true
         
     - name: Store Sdist
       uses: actions/upload-artifact@v4.6.2
@@ -72,6 +73,7 @@ jobs:
         name: pynvel-sdist
         path: dist/*.tar.gz
         if-no-files-found: warn
+        overwrite: true
 #     - name: Test with pytest
 #       run: |
 #         pytest
