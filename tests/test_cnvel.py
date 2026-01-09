@@ -19,12 +19,12 @@ import pynvel
 
 print('Version:'.format(pynvel.version()))
 
-variant = b''
+variant = ''
 region = 6
-forest = b'12'
-district = b'01'
-species = b'DF'
-product = b'01'
+forest = '12'
+district = '01'
+species = 'DF'
+product = '01'
 
 species = pynvel.get_spp_code(species)
 
@@ -36,7 +36,7 @@ mrule = pynvel.init_merchrule(
         evod=1, opt=23, maxlen=39, minlen=12
         , cor='Y')
 
-print('**', mrule)
+print('**mrule', mrule)
 
 # r = pynvel.get_volume(
         # region=6, forest='12', volume_eq='F01FW3W202'
@@ -76,8 +76,8 @@ print('CuFt Tip:   ', r['cuft_tip'])
 #     print(l)
 
 for l in volcalc.logs:
-    print(l.position, l.bole_height, l.length, l.large_dib, l.small_dib,)
-    print(l.scale_diam, l.cuft_gross, l.bdft_gross)
+    print(l.position, l.bole_height, l.length, round(l.large_dib), round(l.small_dib,2),)
+    print('  ', round(l.scale_diam,2), round(l.cuft_gross,2), round(l.bdft_gross,2))
 
 # print(volcalc.volume)
 

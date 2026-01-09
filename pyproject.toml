@@ -8,7 +8,7 @@ requires = [
   "wheel",
   "meson",
   "meson-python>=0.15",
-  "ninja",
+  #"ninja",
   "patchelf ; platform_system != 'Windows'", ## Only linux???
   ]
 build-backend = "mesonpy"
