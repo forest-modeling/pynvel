@@ -87,3 +87,7 @@ install_manifest.txt
 build*/
 *.7z
 /pynvel/_version.py
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+*-checkpoint.ipynb

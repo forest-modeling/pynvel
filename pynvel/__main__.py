@@ -12,7 +12,7 @@ import pynvel
 
 def warn(x): print(x)
 
-def print_report(volcalc, spp_abbv, spp_code, vol_eq, form_class):
+def print_report(volcalc, spp_abbv, spp_code, vol_eq, form_class, max_log=0.0):
     """Print a basic volume report to stdout."""
     r = volcalc.volume
 
@@ -25,6 +25,7 @@ def print_report(volcalc, spp_abbv, spp_code, vol_eq, form_class):
     print('Form Ht:     {:>8.1f}'.format(volcalc.form_height))
     print('Total Ht:    {:>8.1f}'.format(volcalc.total_height))
     print('Merch Ht:    {:>8.1f}'.format(volcalc.merch_height))
+    print('Max Log:     {:>8.1f}'.format(max_log))
     print('CuFt Tot:    {:>8.1f}'.format(r['cuft_total']))
     print('CuFt Merch:  {:>8.1f}'.format(r['cuft_gross_prim']))
     print('BdFt Merch:  {:>8.1f}'.format(r['bdft_gross_prim']))
@@ -112,9 +113,10 @@ def cli():
     pass
 
 @click.command()
+@click.option('-l', '--max-log', required=False, type=float, help='Maximum log length.')
 @click.pass_context
 @shared_options
-def volume(ctx, species='', dbh=None, height=None, equation=None, form_class=80):
+def volume(ctx, species='', dbh=None, height=None, equation=None, form_class=80, max_log=None):
     """
     Report the volume and log attributes of a single tree.
     """
@@ -125,7 +127,12 @@ def volume(ctx, species='', dbh=None, height=None, equation=None, form_class=80)
 
     cfg = pynvel.get_config()
     # print(cfg)
-    mrule = pynvel.init_merchrule(**cfg.get('pynvel').get('merch_rule'))
+    mrule = pynvel.init_merchrule(**cfg.get('merch_rule'))
+    
+    if max_log:
+        mrule['maxlen'] = max_log
+    else:
+        max_log = mrule['maxlen']
 
     if not dbh:
         print('Missing DBH.')
@@ -158,14 +165,14 @@ def volume(ctx, species='', dbh=None, height=None, equation=None, form_class=80)
     # Get a default eqution if none provided
     if not equation:
         vol_eq = pynvel.get_equation(spp_code,
-                cfg['variant'].encode(), cfg['region'],
-                cfg['forest'].encode(), cfg['district'].encode(),
-                cfg['product'].encode()
+                cfg['variant'], cfg['region'],
+                cfg['forest'], cfg['district'],
+                cfg['product']
                 )
 
     elif equation.upper() == 'FIA':
-        vol_eq = pynvel.get_equation(spp_code, cfg['variant'].encode(),
-                cfg['region'], cfg['forest'].encode(), cfg['district'].encode()
+        vol_eq = pynvel.get_equation(spp_code, cfg['variant'],
+                cfg['region'], cfg['forest'], cfg['district']
                 , fia=True)
 
     else:
@@ -189,13 +196,14 @@ def volume(ctx, species='', dbh=None, height=None, equation=None, form_class=80)
         tot_ht = height
 
     # TODO: Implement user assigned log lengths, cruise type='V'
-    ve = vol_eq.encode()
     volcalc = pynvel.VolumeCalculator(
-            volume_eq=vol_eq.encode()
+            volume_eq=vol_eq
             , merch_rule=mrule
-            , cruise_type=b'C'
+            , calc_type='C'
             , calc_products=True
             )
+    
+    # volcalc.merch_rule_flag = 1
 
     error = volcalc.calc(
             dbh_ob=dbh
@@ -204,7 +212,7 @@ def volume(ctx, species='', dbh=None, height=None, equation=None, form_class=80)
 #             , log_len=np.array([40, 30, 20, 10])
             )
 
-    print_report(volcalc, spp_abbv, spp_code, vol_eq, form_class)
+    print_report(volcalc, spp_abbv, spp_code, vol_eq, form_class, max_log)
 #     print(error)
 
 @click.command(name='stem-dib')
@@ -240,20 +248,20 @@ def stem_diam(ctx, species='', dbh=None, height=None, equation=None
     # Get a default eqution if none provided
     if not equation:
         vol_eq = pynvel.get_equation(spp_code,
-                cfg['variant'].encode(), cfg['region'],
-                cfg['forest'].encode(), cfg['district'].encode(),
-                cfg['product'].encode()
+                cfg['variant'], cfg['region'],
+                cfg['forest'], cfg['district'],
+                cfg['product']
                 )
 
     elif equation.upper() == 'FIA':
-        vol_eq = pynvel.get_equation(spp_code, cfg['variant'].encode(),
-                cfg['region'], cfg['forest'].encode(), cfg['district'].encode()
+        vol_eq = pynvel.get_equation(spp_code, cfg['variant'],
+                cfg['region'], cfg['forest'], cfg['district']
                 , fia=True)
 
     else:
         vol_eq = equation.upper()
 
-    stem_dib = pynvel.calc_dib(volume_eq=vol_eq.encode()
+    stem_dib = pynvel.calc_dib(volume_eq=vol_eq
             , dbh_ob=dbh, total_ht=height, form_class=form_class
             , stem_ht=stem_ht)
 
@@ -295,20 +303,20 @@ def stem_height(ctx, species='', dbh=None, height=None, equation=None
     # Get a default eqution if none provided
     if not equation:
         vol_eq = pynvel.get_equation(spp_code,
-                cfg['variant'].encode(), cfg['region'],
-                cfg['forest'].encode(), cfg['district'].encode(),
-                cfg['product'].encode()
+                cfg['variant'], cfg['region'],
+                cfg['forest'], cfg['district'],
+                cfg['product']
                 )
 
     elif equation.upper() == 'FIA':
-        vol_eq = pynvel.get_equation(spp_code, cfg['variant'].encode(),
-                cfg['region'], cfg['forest'].encode(), cfg['district'].encode()
+        vol_eq = pynvel.get_equation(spp_code, cfg['variant'],
+                cfg['region'], cfg['forest'], cfg['district']
                 , fia=True)
 
     else:
         vol_eq = equation.upper()
 
-    stem_ht = pynvel.calc_height(volume_eq=vol_eq.encode()
+    stem_ht = pynvel.calc_height(volume_eq=vol_eq
             , dbh_ob=dbh, total_ht=height, form_class=form_class
             , stem_dib=stem_dib)
 
@@ -316,6 +324,37 @@ def stem_height(ctx, species='', dbh=None, height=None, equation=None
 
     msg = 'Stem height to {:.1f}" = {:.2f} ({:.1f}%)'.format(stem_dib, stem_ht, rel_ht)
     print(msg)
+
+@click.command(name='get-equation')
+@click.option('-s', '--species', required=True, type=str, help='Species FIA Code or FVS abbreviation')
+@click.option('-v', '--variant', required=False, default='PN', type=str, help='FVS variant')
+@click.option('-r', '--region', required=False, default=6, type=int, help='USFS region')
+@click.option('-f', '--forest', required=False, default='12', type=str, help='USFS forest')
+@click.option('-d', '--district', required=False, default='01', type=str, help='USFS district')
+@click.option('-p', '--product', required=False, default='01', type=str, help='NVEL product code')
+@click.option('--fia', is_flag=True, default=True, help='Return the FIA equation')
+@click.option('--legacy', is_flag=True, default=False, help='Return the legacy FIA equation')
+def get_equation(
+    species, variant='PN', region=6, forest='12',
+    district='01', product='01',
+    fia=True, legacy=False
+    ):
+    # Convert the species code
+    try:
+        spp_code = int(species)
+        spp_abbv = pynvel.fia_spp[spp_code]
+
+    except:
+        spp_code = pynvel.get_spp_code(species.upper())
+        spp_abbv = species.upper()
+
+    vol_eq = pynvel.get_equation(
+        spp_code, variant, region, forest,
+        district, product,
+        fia, legacy
+        )
+
+    print(f'{spp_abbv.upper()}({spp_code}): {vol_eq.upper()}')
 
 @click.command(name='run-tests')
 def run_tests():
@@ -347,8 +386,10 @@ def print_config():
 
 cli.add_command(volume)
 cli.add_command(stem_height)
+cli.add_command(stem_diam)
 cli.add_command(run_tests)
 cli.add_command(print_config)
+cli.add_command(get_equation)
 #cli.add_command(calc_table)
 #cli.add_command(install_arcgis)
 

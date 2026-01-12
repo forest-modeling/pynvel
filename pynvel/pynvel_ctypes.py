@@ -64,7 +64,7 @@ ht_1st_limb = c_int(0)
 live = c_char_p(b'L')
 basal_area = c_int(0)
 site_index = c_int(0)
-cruise_type = c_char_p(b'C')
+calc_type = c_char_p(b'C')
 error_flag = c_int(0)
 idist = c_int(0)
 
@@ -159,7 +159,7 @@ r = nvel.volinit2_(
         , live
         , byref(basal_area)
         , byref(site_index)
-        , cruise_type
+        , calc_type
         , byref(error_flag)
         , byref(mrule)
         , byref(idist)

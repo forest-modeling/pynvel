@@ -27,7 +27,7 @@ py3.extension_module(
     '_pynvel.pyx',
     dependencies : dep_py,
     link_with : [nvel_static_lib,],
-    include_directories : incdir_numpy,
+    include_directories : fs.relative_to(incdir_numpy, meson.current_source_dir()),
     cython_args : [
       '--include-dir',
       meson.current_build_dir(),

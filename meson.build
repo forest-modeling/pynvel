@@ -4,7 +4,7 @@
 project(
   'pynvel',
   'c', 'cpp', 'cython',
-  meson_version: '>= 0.64.0',
+  meson_version: '>= 1.3.0',
   default_options : [
     'buildtype=debugoptimized',
     'c_std=c99',
@@ -132,7 +132,7 @@ incdir_numpy = run_command(py3,
 ).stdout().strip()
 message(incdir_numpy)
 
-inc_np = include_directories(incdir_numpy)
+inc_np = include_directories(fs.relative_to(incdir_numpy, meson.current_source_dir()))
 
 # incdir_f2py = run_command(py3,
 #     ['-c', 'import os; import numpy.f2py; print(numpy.f2py.get_include())'],

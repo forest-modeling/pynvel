@@ -5,7 +5,7 @@ External references to the NVEL/VOLLIB library
 import numpy as np
 cimport numpy as np
 
-cdef extern from *:
+cdef extern from "vollib.h":
     # vernum.f
     void vernum_(int *v)
 
@@ -22,6 +22,12 @@ cdef extern from *:
     void fiavoleqdef_(char* var, int *region, char* forest, char* district
             , int *species, char* vol_eq, int *err_flag
             , int vl, int fl, int dl, int el)
+
+    # Call the NSVB equation lookup
+            # Implemented in nsvb.f
+    void nvb_defaulteq_(int *region, char* forest, char* district
+            , int *species, char* vol_eq, int *err_flag
+            , int fl, int dl, int el)
 
     # vollibcs.f
     void vollibc2_(
@@ -76,6 +82,55 @@ cdef extern from *:
             , int prodi_len, int livei_len, int ctypei_len
             )
 
+    ## TODO: Implement VOLINITNVB, it is the new top level NVEL subroutine
+    ##       It accomodates merch rules and hands off to VOLINIT for non-FIA equations
+    # VOLINITNVB(REGN,FORST,VOLEQ,MTOPP,MTOPS,STUMP,DBHOB,
+    #  +    DRCOB,HTTYPE,HTTOT,HTLOG,HT1PRD,HT2PRD,UPSHT1,UPSHT2,UPSD1,
+    #  +    UPSD2,HTREF,AVGZ1,AVGZ2,FCLASS,DBTBH,BTR,CR,CULL,DECAYCD,
+    #  +    VOL,LOGVOL,LOGDIA,LOGLEN,BOLHT,TLOGS,NOLOGP,NOLOGS,CUTFLG,
+    #  +    BFPFLG,CUPFLG,CDPFLG,SPFLG,CONSPEC,PROD,HTTFLL,LIVE,
+    #  +    BA,SI,CTYPE,ERRFLAG,IDIST,BRKHT,BRKHTD,FIASPCD,DRYBIO,
+    #  +    GRNBIO,MRULEFLG,MERRULES)
+    void volinitnvb_(
+            int *region, char* forest, char* vol_eq, float *min_top_prim, float *min_top_sec
+            , float *stump_ht, float *dbh_ob, float *drc_ob, char* ht_type
+            , float *total_ht, int *ht_log, float *ht_prim, float *ht_sec
+            , float *upper_ht1, float *upper_ht2, float *upper_diam1, float *upper_diam2
+            , int *ht_ref, float *avg_z1, float *avg_z2, int *form_class
+            , float *bark_2thick, float *bark_ratio
+
+            , float *crown, float *cull, int *decaycd
+
+            , float *volume, float *log_volume, float *log_diam
+            , float *log_len, float *bol_ht, int *num_logs
+            , float *num_logs_prim
+            , float *num_logs_sec
+            , int *cubic_total_flag
+            , int *bdft_prim_flag
+            , int *cubic_prim_flag
+            , int *cord_prim_flag
+            , int *sec_vol_flag
+            , char* con_spp
+            , char* prod_code
+            , int *ht_1st_limb
+            , char* live
+            , int *basal_area
+            , int *site_index
+            , char* calc_type
+            , int *error_flag
+            , int *district
+            , float *brkht
+            , float *brkhtd
+            , int *fiaspcd
+            , float *drybio
+            , float *grnbio
+            , int *mruleflag
+            , merchrules_ *merrules
+
+            , int forest_len, int voleq_len, int httype_len, int conspec_len
+            , int prod_len, int live_len, int ctype_len
+            )
+
     # Calculate the height to desired top dib
     # ht2topd.f
     void ht2topd_(
@@ -100,7 +155,7 @@ cdef extern from *:
     void jenkins(int *spec, float *dbhob, float *bioms)
 
 # A struct to represent the merchrules defined type
-cdef extern:
+cdef extern from "vollib.h":
     ctypedef struct merchrules_:
         int evod
         int opt
@@ -115,4 +170,4 @@ cdef extern:
         float btr
         float dbtbh
         float minbfd
-        char * cor #NOTE: **Must be single char, not pointer. Unsure how to pass a len arg in a struct
+        char* cor #NOTE: **Must be single char, not pointer. Unsure how to pass a len arg in a struct

@@ -195,7 +195,7 @@ def _VOLLIBC2(
         , bole_hts=[]
         , product=1, con_spp=''
         , live_stat='L', ht_live_limb=0
-        , cruise_type='F', num_logs_1=0
+        , calc_type='F', num_logs_1=0
         , num_logs_2=0, merch_rule=None
         , baa=0, site_idx=0
         , debug=0
@@ -232,10 +232,12 @@ def _VOLLIBC2(
     @param con_spp: (CONSPEC) Contract species.  (used by BLM profile models)
     @param ht_live_limb: (HTTFLL) Height to first live limb in feet (used by Region 3 volume equation for ponderosa pine).
     @param live_stat: (LIVE) Tree status used in Region 1 equations
-    @param cruise_type: (CTYPE) Cruise Type:  Flag to set some special volume criteria.
+    @param calc_type: (CTYPE) Calculation Type:  Flag to set some special volume criteria.
                                 'C' or blank = Cruise volumes.  Will return zero volumes if required fields are missing.
                                 'F' = FVS volumes.  Missing merchantable heights and form class variables will be calculated if they are required.
                                 'V' = Variable log length cruise.  Requires the len_logs variable to contain the variable log lengths.
+                                'I' = FIA method - Volume estimates from stump to merch top with no trim allowance.
+                                'B' = Other volume equations from national biomass
     @param baa: Basal Area of the stand.  Optional variable used when calculating the merchantable heights required with the current Region 8 and Region 9 volume models.
     @param site_idx: Site Index of the stand.  Optional variable used when calculating the merchantable heights required with the current Region 8 and Region 9 volume models.
     @param product: (PROD) Product code: 1 - saw timber; 2 - pulpwood; 6 - roundwood
@@ -304,14 +306,14 @@ def _VOLLIBC2(
 #     BOLHT[:] = [0.0, ] * 21
 
     # process predefined variable log lengths
-    if cruise_type.lower() == 'v':
+    if calc_type.lower() == 'v':
         for i, ll in enumerate(len_logs):
             LOGLEN[i] = ll
 
         for i, bh in enumerate(bole_hts):
             BOLHT[i + 1] = bole_hts[i]
 
-        # if log lengths are provided and cruise_type=='V' then TLOGS is required
+        # if log lengths are provided and calc_type=='V' then TLOGS is required
         TLOGS = ctypes.c_int(len(len_logs))
 
     else:
@@ -340,8 +342,8 @@ def _VOLLIBC2(
 
     BA = ctypes.c_int(baa)
     SI = ctypes.c_int(site_idx)
-    # mCTYPE = fchar('%-2s' % cruise_type, 2)
-    mCTYPE = ctypes.c_char_p(str.encode('%-2s' % cruise_type))
+    # mCTYPE = fchar('%-2s' % calc_type, 2)
+    mCTYPE = ctypes.c_char_p(str.encode('%-2s' % calc_type))
     ERRFLAG = ctypes.c_int(0)
 
     # added user merch rules 1/23/12 following modifications provided by
@@ -468,7 +470,7 @@ def _VOLLIBC2_foo(
         , bole_hts=[]
         , product=1, con_spp=''
         , live_stat='L', ht_live_limb=0
-        , cruise_type='F', num_logs_1=0
+        , calc_type='F', num_logs_1=0
         , num_logs_2=0, merch_rule=None
         , baa=0, site_idx=0
         , debug=0
@@ -505,10 +507,12 @@ def _VOLLIBC2_foo(
     @param con_spp: (CONSPEC) Contract species.  (used by BLM profile models)
     @param ht_live_limb: (HTTFLL) Height to first live limb in feet (used by Region 3 volume equation for ponderosa pine).
     @param live_stat: (LIVE) Tree status used in Region 1 equations
-    @param cruise_type: (CTYPE) Cruise Type:  Flag to set some special volume criteria.
+    @param calc_type: (CTYPE) Calculation Type:  Flag to set some special volume criteria.
                                 'C' or blank = Cruise volumes.  Will return zero volumes if required fields are missing.
                                 'F' = FVS volumes.  Missing merchantable heights and form class variables will be calculated if they are required.
                                 'V' = Variable log length cruise.  Requires the len_logs variable to contain the variable log lengths.
+                                'I' = FIA method - Volume estimates from stump to merch top with no trim allowance.
+                                'B' = Other volume equations from national biomass
     @param baa: Basal Area of the stand.  Optional variable used when calculating the merchantable heights required with the current Region 8 and Region 9 volume models.
     @param site_idx: Site Index of the stand.  Optional variable used when calculating the merchantable heights required with the current Region 8 and Region 9 volume models.
     @param product: (PROD) Product code: 1 - saw timber; 2 - pulpwood; 6 - roundwood
@@ -574,14 +578,14 @@ def _VOLLIBC2_foo(
 #     BOLHT[:] = [0.0, ] * 21
 
     # process predefined variable log lengths
-    if cruise_type.lower() == 'v':
+    if calc_type.lower() == 'v':
         for i, ll in enumerate(len_logs):
             LOGLEN[i] = ll
 
         for i, bh in enumerate(bole_hts):
             BOLHT[i + 1] = bole_hts[i]
 
-        # if log lengths are provided and cruise_type=='V' then TLOGS is required
+        # if log lengths are provided and calc_type=='V' then TLOGS is required
         TLOGS = ctypes.c_int(len(len_logs))
 
     else:
@@ -607,7 +611,7 @@ def _VOLLIBC2_foo(
 
     BA = ctypes.c_int(baa)
     SI = ctypes.c_int(site_idx)
-    mCTYPE = ctypes.c_char_p(cruise_type)
+    mCTYPE = ctypes.c_char_p(calc_type)
     ERRFLAG = ctypes.c_int(0)
 
     # added user merch rules 1/23/12 following modifications provided by
@@ -940,17 +944,17 @@ def test2():
     print('total cuft: %.1f, gross cuft: %.1f, gross bdft: %.1f, intl. 1/4 bdft: %.1f' %
             (vol['total_cuft'], vol['merch_cuft'], vol['merch_bdft'], vol['int4_bdft']))
 
-    # predetermine the lengths of the first logs, if specified then cruise_type must be 'V'
+    # predetermine the lengths of the first logs, if specified then calc_type must be 'V'
     # if bole length exceeds the sum of predefined log lengths, then it appears
     # the remainder is processed following the default NVEL rules.
 #     len_logs = [100, 40]
-#     cruise_type = 'V'
+#     calc_type = 'V'
     len_logs = []
-    cruise_type = 'C'
+    calc_type = 'C'
 
     # get_volume collects all the NVEL outputs into a dictionary
     out = get_volume(dbh, spp=spp, tot_ht=ht, merch_rule=merch_rule
-            , len_logs=len_logs, cruise_type=cruise_type
+            , len_logs=len_logs, calc_type=calc_type
             , **kargs
             )
     logs = out['logs']

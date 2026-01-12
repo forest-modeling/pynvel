@@ -2,17 +2,28 @@
 PyNVEL - A Python interface for the National Volume Estimator Library (NVEL).
 """
 
-# NOTE: This file contains automated build-time configuration values.
-#       The configuration step runs during the CMake configuration.
-
 import os
 import sys
 
 import toml
 import numpy as np
 
-from pynvel._version import __version__,__version_tuple__
 from pynvel.volume_height import calc_volume_height
+
+if sys.version_info[:2] >= (3, 8):
+    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
+    from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
+else:
+    from importlib_metadata import PackageNotFoundError, version  # pragma: no cover
+
+try:
+    # Change here if project is renamed and does not equal the package name
+    dist_name = "PyNVEL"
+    __version__ = version(dist_name)
+except PackageNotFoundError:  # pragma: no cover
+    __version__ = "unknown"
+finally:
+    del version, PackageNotFoundError
 
 def warn(x):
     print(x)
@@ -71,17 +82,17 @@ default_config = """
     stump = 1.0
     trim = 1.0
 
-  [pynvel.equations]
-    SS = "632TRFW098"
-    LP = "632TRFW108"
-    PP = "632TRFW122"
-    DF = "632TRFW202"
-    RC = "632TRFW242"
-    WH = "632TRFW263"
-    RA = "616TRFW351"
-    OH = "616TRFW998"
-    OC = "632TRFW202"
-    OT = "632TRFW202"
+  [pynvel.default_equations]
+    SS = "NVBM240098"
+    LP = "NVBM240108"
+    PP = "NVBM240122"
+    DF = "NVBM240202"
+    RC = "NVBM240242"
+    WH = "NVBM240263"
+    RA = "NVBM240351"
+    OH = "NVBM240998"
+    OC = "NVBM240202"
+    OT = "NVBM240202"
 """
 
 def get_config():
@@ -90,11 +101,11 @@ def get_config():
     """
     # TODO: Create a user config in my documents or appdata, .pynvel/pynvel.cfg
     # TODO: Overlay the user config with the global config.
-    cfg = toml.loads(default_config)
+    cfg = toml.loads(default_config).get('pynvel')
 
     try:
         with open(config_path) as f:
-            _cfg = toml.load(f)
+            _cfg = toml.load(f).get('pynvel')
 
         cfg.update(_cfg)
 
@@ -103,7 +114,7 @@ def get_config():
         warn(('PyNVEL config does not exist. Writing defaults to {}.'
                 ).format(config_path))
         with open(config_path, 'w') as f:
-            f.write(toml.dumps(cfg))
+            f.write(toml.dumps(dict(pynvel=cfg)))
 
     return cfg
 
@@ -114,10 +125,10 @@ class version:
     vollib = vollib_version()
 
     def __call__(self):
-        return {'api':self.api, 'vollib':self.vollib}
+        return {'pynvel':self.api, 'vollib':self.vollib}
 
     def __str__(self):
-        vs = str({'api':self.api, 'vollib':self.vollib})
+        vs = str({'pynvel':self.api, 'vollib':self.vollib})
         return vs
 
 config = get_config()
@@ -135,17 +146,18 @@ class VolumeCalculator(Cython_VolumeCalculator):
 
         Args
         ----
-        merch_rule:
-        log_prod_lims:
+        merch_rule (merchrules_): Custom NVEL merchandizing specifications, as returned by pynel.init_merchrule.
+        log_prod_lims: Log product specifications
         """
-        super(VolumeCalculator, self).__init__(*args, **kargs)
 
+        # If a custome merch_rule is not provided, generate from the config
         if merch_rule is None:
-            merch_rule = init_merchrule(**config.get('pynvel')['merch_rule'])
-        self.merch_rule = merch_rule
+            merch_rule = init_merchrule(**config.get('merch_rule'))
 
+        super(VolumeCalculator, self).__init__(merch_rule=merch_rule, *args, **kargs)
+            
         if log_prod_lims is None:
-            log_prod_lims = np.array(config.get('pynvel')['log_products'], dtype=np.float32)
+            log_prod_lims = np.array(config.get('log_products'), dtype=np.float32)
         self.log_prod_lims = log_prod_lims
 
         # ## TODO: Search VolumeLibrary for known equations
