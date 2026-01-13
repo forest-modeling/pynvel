@@ -271,7 +271,7 @@ def stem_diam(ctx, species='', dbh=None, height=None, equation=None
     print(msg)
 
 @click.command(name='stem-ht')
-@click.option('-u', '--stem-dib', required=True, type=float, help='Upper stem diameter.')
+@click.option('-m', '--stem-dib', required=True, type=float, help='Upper stem diameter.')
 @click.pass_context
 @shared_options
 def stem_height(ctx, species='', dbh=None, height=None, equation=None
@@ -356,14 +356,14 @@ def get_equation(
 
     print(f'{spp_abbv.upper()}({spp_code}): {vol_eq.upper()}')
 
-@click.command(name='run-tests')
-def run_tests():
-    print('Run pynvel tests')
+# @click.command(name='run-tests')
+# def run_tests():
+#     print('Run pynvel tests')
 
-    import subprocess
-    os.chdir(os.path.join(os.path.dirname(__file__), 'test'))
-    subprocess.call('pytest')
-    sys.exit()
+#     import subprocess
+#     os.chdir(os.path.join(os.path.dirname(__file__), 'test'))
+#     subprocess.call('pytest')
+#     sys.exit()
 
 @click.command(name='config')
 def print_config():
@@ -387,7 +387,7 @@ def print_config():
 cli.add_command(volume)
 cli.add_command(stem_height)
 cli.add_command(stem_diam)
-cli.add_command(run_tests)
+# cli.add_command(run_tests)
 cli.add_command(print_config)
 cli.add_command(get_equation)
 #cli.add_command(calc_table)

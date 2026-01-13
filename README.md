@@ -1,83 +1,336 @@
 # PyNVEL
 
-A Python package for the National Volume Estimator library.
+A Python wrapper and extension for the **USFS National Volume Estimator Library (NVEL)**.
 
-PyNVEL provides a single class, `VolumeCalculator`, to abstract the interface
-with the low level NVEL library functions. PyNVEL uses Cython to accelerate 
-bulk processing of tree data and to interface with the NVEL library.
+PyNVEL provides a high-level, Pythonic interface to the low-level NVEL Fortran library via a single primary class, `VolumeCalculator`. It uses **Cython** for efficient bulk processing of tree data and for binding to the underlying NVEL routines.
 
-A command line interface is also included for convenient single tree volume
-estimation reports and to test various equation and configuration combinations.
+In addition to the Python API, PyNVEL includes a **command-line interface (CLI)** for:
 
-[National Volume Estimator Library][1]  
-[NVEL source code][2]
+* Quick single-tree volume reports
+* Exploring equation options
+* Testing configuration and regional settings
 
-[1]: http://www.fs.fed.us/fmsc/measure/volume/nvel/
-[2]: https://github.com/FMSC-Measurements/VolumeLibrary
+> **Disclaimer**
+> PyNVEL is an independent project. It is **not affiliated with or supported by** the USFS Forest Products Measurements group.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/1td0a2tqkcdvhi7l?svg=true)](https://ci.appveyor.com/project/tharen/pynvel)
+**Related resources**
+
+* [National Volume Estimator Library overview](https://www.fs.usda.gov/managing-land/forest-management/products/measurement/volume-estimation)
+* [NVEL source code](https://github.com/FMSC-Measurements/VolumeLibrary)
+
+---
+
+## Project Status
+
+[![Build Python Packages](https://github.com/forest-modeling/pynvel/actions/workflows/main.yml/badge.svg)](https://github.com/forest-modeling/pynvel/actions/workflows/main.yml)
+
+* Binary wheels available via GitHub Actions artifacts
+* PyPI and Conda-Forge distribution planned
+
+---
 
 ## Getting Started
 
-### Clone the repository
+### Installation
 
-The NVEL code is included as a Git submodule. 
+#### Prebuilt Wheels (Recommended)
 
-    git clone --recurse-submodules https://github.com/tharen/pynvel
+Precompiled wheels are available as zipped artifacts from successful GitHub Actions runs.
 
-or for older version of Git.
+1. Navigate to the workflow artifacts for a successful build
+2. Download the archive matching your OS and Python version
+3. Extract the wheel file
+4. Install with `pip`
 
-    git clone https://github.com/tharen/pynvel
-    cd pynel
-    git submodule update --init --recursive
+```bash
+# Activate your target environment
+pixi shell
 
-### Setup the Python Environment
+# Install the extracted wheel
+pip install /path/to/pynvel-*.whl
+```
 
-Conda is not specifically required, but is known to work as advertised. Note
-that the `conda-forge` channel is prioritized in the environment.yml file.
+#### Package Managers
 
-    conda env create -f python\environment.yml
-    
-### Install Additional Requirements
+* **PyPI**: planned
+* **Conda-Forge**: planned
 
-* [CMake](https://cmake.org/)
-* [MinGW-w64](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/)
+---
 
-  MinGW32 or other MinGW providers will likely work, but have not been tested
-  with recent revisions.
+## Usage
 
-### To Build
+### API
 
-See [build_notes.txt](./build_notes.txt)
+Calculate volume for a tree.
 
-### Usage
+```Python
+eq = 'NVBM240202'
+dbh = 18
+ht = 120
+vc = pynvel.VolumeCalculator(volume_eq=eq)
+vc.calc(dbh_ob=dbh, total_ht=ht)
 
-Command line interface
+if r != 0:
+    print('error code: {}'.format(r))
+    print(row)
 
-    $ pynvel --help
-  
-Run the unit tests.
-  
-    $ pynvel run-tests
-    
-Report the contents of the configuration file. The configuration is stored as
-a JSON formatted text file.
-  
-    $ pynvel configuration>config.json
-    
-Get a volume report for tree using the default equations. Species, DBH,
-and total height are required. Default equations can be changed in the 
-configuration file.
-    
-    $ pynvel volume --help
-    $ pynvel volume -sDF -d18 -t120
-    
-Any valid NVEL equation identifier can be specified.
+# The volume property is a dict total volume attributes
+print(vc.volume['bdft_gross_prim'])
+print(vc.volume['cuft_total'])
 
-    $ pynvel volume -eF02FW3W202 -d18 -t120 -f87
+# The logs property is a list of log objects containing attributes for each log.
+print(len(vc.logs))
+for i,log in enumerate(vd.logs):
+    print(
+        f"Log: {i+1}; Diam: {round(log.small_dib, 1)}; Length {log.length};"
+        f"CuFt: {round(log.cuft_gross)}; BdFt: {round(log.bdft_gross, 1)}"
+        )
+```
 
-Estimate height to specific diameter inside bark along the bole.
+### Command-Line Interface
 
-    $ pynvel stem-ht --help
-    $ pynvel stem-ht -e F02FW3W202 -f 87 -d 18 -t 120 --stem-dib 10.4
-    
+Display general help:
+
+```bash
+$ pynvel --help
+```
+
+#### Configuration
+
+The configuration is stored as a JSON-formatted text file.
+
+Export the active configuration:
+
+```bash
+$ pynvel configuration > config.json
+```
+
+Default equations and regions can be modified by editing this file.
+
+#### Tree Volume Estimation
+
+Generate a mini report on tree volume components.
+
+```bash
+$ pynvel volume --help
+```
+
+Estimate volume using the default equation. Species, DBH, and total height are required
+
+```bash
+$ pynvel volume -s DF -d 18 -t 120
+```
+
+```
+Default species equation will be used - DF: NVBM240202
+Volume Report (Version: 20231106)
+---------------------------------------
+Species: DF(202)
+Equation: NVBM240202
+DBH:             18.0
+Form Class       80.0
+Form Ht:          0.0
+Total Ht:       120.0
+Merch Ht:       101.2
+Max Log:         40.0
+CuFt Tot:        74.7
+CuFt Merch:      70.4
+BdFt Merch:     302.0
+CuFt Top:         1.1
+CuFt Stump:       1.8
+CuFt Tip:         0.0
+
+Product Summary
+---------------
+Prod Logs CuFt   BdFt    Len   Diam
+
+Log Detail
+----------
+Log Prod Bole    Len     L DOB   L DIB   S DOB   S DIB   Scale   CuFt    BdFt    Int 1/4
+1   1    42.0    40.0    16.3    16.3    0.0     12.0    12.0    43.6    196.0   315.0
+2   1    83.0    40.0    12.0    12.0    0.0     7.6     8.0     22.7    88.0    145.0
+3   2    101.0   17.0    7.6     7.6     0.0     5.0     5.0     4.1     18.0    10.0
+4   3    116.0   14.0    5.0     5.0     0.0     2.0     2.0     1.1     2.0     0.0
+```
+
+Change the maximum log length to evaluate effects on merchantable volume:
+
+```bash
+$ pynvel volume -s DF -d 18 -t 120 -l 16
+```
+
+```
+Default species equation will be used - DF: NVBM240202
+Volume Report (Version: 20231106)
+---------------------------------------
+Species: DF(202)
+Equation: NVBM240202
+DBH:             18.0
+Form Class       80.0
+Form Ht:          0.0
+Total Ht:       120.0
+Merch Ht:       101.2
+Max Log:         16.0
+CuFt Tot:        74.7
+CuFt Merch:      65.6
+BdFt Merch:     358.0
+CuFt Top:         1.1
+CuFt Stump:       1.8
+CuFt Tip:         0.0
+
+Product Summary
+---------------
+Prod Logs CuFt   BdFt    Len   Diam
+
+Log Detail
+----------
+Log Prod Bole    Len     L DOB   L DIB   S DOB   S DIB   Scale   CuFt    BdFt    Int 1/4
+1   1    18.0    16.0    16.3    16.3    0.0     14.5    14.0    19.7    114.0   135.0
+2   1    35.0    16.0    14.5    14.5    0.0     12.7    13.0    15.9    97.0    115.0
+3   1    52.0    16.0    12.7    12.7    0.0     11.0    11.0    12.7    67.0    80.0
+4   1    69.0    16.0    11.0    11.0    0.0     9.2     9.0     8.8     39.0    50.0
+5   2    86.0    16.0    9.2     9.2     0.0     7.2     7.0     5.7     26.0    30.0
+6   2    101.0   14.0    7.2     7.2     0.0     5.0     5.0     2.8     15.0    10.0
+7   3    116.0   14.0    5.0     5.0     0.0     2.0     2.0     1.1     2.0     0.0
+```
+
+Specify an explicit NVEL equation identifier and form class as and upper stem profile point for supported profile equations:
+
+```bash
+$ pynvel volume -e F02FW3W202 -d 18 -t 120 -f 87
+```
+
+#### Stem Calculations
+
+Estimate height to a specified **diameter inside bark (DIB)** along the bole
+(Decimal values must be quoted):
+
+```bash
+$ pynvel stem-ht --help
+$ pynvel stem-ht -s DF -d 18 -t 120 --stem-dib "10.4"
+```
+
+```
+Stem height to 10.4" = 67.88 (54.9%)
+```
+
+Estimate **diameter inside bark** at a specified height:
+
+```bash
+$ pynvel stem-dib --help
+$ pynvel stem-dib -s DF -d 18 -t 120 --stem-ht "55.5"
+
+```
+
+```
+Stem DIB at 55.5' = 11.81
+```
+
+Both `stem-ht` and `stem-dib` accept NVEL equation arguments:
+
+```bash
+$ pynvel stem-ht -e F02FW3W202 -f 87 -d 18 -t 120 --stem-dib "10.4"
+```
+
+```
+Species  is not known.
+Stem height to 10.4" = 66.22 (53.4%)
+```
+
+```bash
+$ pynvel stem-dib -e F02FW3W202 -f 87 -d 18 -t 120 --stem-ht "55.5"
+```
+
+```
+Species  is not known.
+Stem DIB at 55.5' = 11.57
+```
+
+---
+
+## Development
+
+### Clone the Repository
+
+The NVEL source code is included as a Git submodule.
+
+```bash
+$ git clone --recurse-submodules https://github.com/forest-modeling/pynvel
+```
+
+For older versions of Git:
+
+```bash
+$ git clone https://github.com/forest-modeling/pynvel
+$ cd pynvel
+$ git submodule update --init --recursive
+```
+
+---
+
+### Python Environment Setup
+
+An isolated environment is strongly recommended. PyNVEL development uses **Pixi** as the preferred environment manager.
+
+The repository includes both `pixi.toml` and `pixi.lock`.
+
+```bash
+$ cd /project/root
+$ pixi install   # install dependencies
+$ pixi shell     # activate environment
+```
+
+---
+
+### Building
+
+PyNVEL is built using:
+
+* [Meson](https://mesonbuild.com/)
+* [meson-python](https://mesonbuild.com/meson-python/)
+
+The Cython extension and NVEL Fortran sources are compiled using GNU compilers on both Linux and Windows. All required dependencies are installed automatically when using the Pixi environment.
+
+#### Editable Installation
+
+An editable install automatically recompiles the extension when source files change.
+
+> **Note**
+> Recompilation will fail if the extension is currently imported in an active Python interpreter or notebook kernel.
+
+```bash
+$ python -m pip install -e . --verbose --no-build-isolation
+```
+
+#### Local Installation
+
+```bash
+$ python -m pip install . --verbose --no-build-isolation
+```
+
+#### Building Wheels
+
+Wheels can be built for the active environment using the Python packaging build frontend:
+
+```bash
+$ python -m build --no-isolation
+```
+
+---
+
+## Testing
+
+A suite of unit tests is included to verify core functionality.
+
+Tests are located in the `tests/` directory at the repository root and can be run using **pytest**:
+
+```bash
+$ cd /project/root
+$ python -m pytest
+```
+
+---
+
+## License
+
+See the repository license file for details.

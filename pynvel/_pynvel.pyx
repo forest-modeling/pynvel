@@ -76,9 +76,6 @@ cpdef merchrules_ init_merchrule(
         struct: A struct representing the defined merchandizing rules.
     """
 
-    # cdef bytes b_cor = cor.encode('utf-8')
-    # cdef const char* c_cor = b_cor
-
     cdef merchrules_ mr = merchrules_(
             evod=evod, opt=opt,
             maxlen=maxlen, minlen=minlen,
@@ -706,6 +703,9 @@ cdef class Cython_VolumeCalculator:
         """
         Return an array of volume attributes for an array of trees.
 
+        Volume for all rows in the array are calculated with the same equation
+        and merchandizing rules.
+
         Args:
             dbh (float64): Array of tree DBHs
             total_ht (float64): Array of tree heights
@@ -714,6 +714,17 @@ cdef class Cython_VolumeCalculator:
 
         Returns:
             float64: Array of tree volume attributes
+                     [Total CuFt, Merch CuFt, Scribner BdFt, Merch Height, Num Logs, Error Flag]
+        
+        If <with_prod> is True additional arrays are populated and available as class attributes.
+            The arrays are of shape(ntrees, _NUM_PROD) and represent a summary of logs classified
+            by product type. The product arrays are:
+
+            self.trees_product_cuft: Merchantable cubic foot volume
+            self.trees_product_bdft: Merchantable scribner board foot volume
+            self.trees_product_diam: Average log diameter
+            self.trees_product_len: Total log length
+            self.trees_product_count: Number of logs
         """
 
         #TODO: need to type the I/O arrays or use Cython views

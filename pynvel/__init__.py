@@ -118,12 +118,17 @@ def get_config():
 
     return cfg
 
+
 class version:
     """Report the version numbers of the API and NVEL(vollib)."""
 
     api = __version__
     vollib = vollib_version()
 
+    @classmethod
+    def version(cls):
+        return {'pynvel':cls.api, 'vollib':cls.vollib}
+    
     def __call__(self):
         return {'pynvel':self.api, 'vollib':self.vollib}
 
