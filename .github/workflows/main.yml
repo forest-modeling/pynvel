@@ -1,6 +1,7 @@
 name: Build Python Packages
 
 on:
+  workflow_dispatch:
   push:
     branches: ["main","dev"]
   
@@ -21,7 +22,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: recursive
     
@@ -33,7 +34,7 @@ jobs:
         version: ${{ matrix.toolchain.version }}
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
@@ -59,18 +60,20 @@ jobs:
         python -m build --no-isolation
         
     - name: Store Wheel
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.6.2
       with:
         name: pynvel-${{ runner.os }}-py${{ matrix.python-version }}-wheels
         path: dist/*.whl
         if-no-files-found: warn
+        overwrite: true
         
     - name: Store Sdist
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.6.2
       with:
         name: pynvel-sdist
         path: dist/*.tar.gz
         if-no-files-found: warn
+        overwrite: true
 #     - name: Test with pytest
 #       run: |
 #         pytest
