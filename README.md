@@ -331,6 +331,24 @@ $ python -m pytest
 
 ---
 
+## Container File
+
+PyNVEL can be built and run as a container image. The included pynvel.containterfile provides access to 
+the command line features
+
+### Build the Image
+
+```bash
+$ podman build -t pynvel -f pynvel.containerfile
+```
+
+### Run command line tools
+```bash
+$ podman run --rm pynvel volume -sDF -d18 -t120
+```
+
+---
+
 ## License
 
 See the repository license file for details.

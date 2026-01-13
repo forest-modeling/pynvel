@@ -35,7 +35,7 @@ class Test(unittest.TestCase):
 
         # TODO: Test multiple equations using nose-parameterized
         self.vol_eq = 'F01FW2W202'
-        self.log_len = 40
+        self.log_len = 16
 
         pth = '{}/data/{}_{}ft.csv'.format(root, self.vol_eq, self.log_len)
         dtype = dict(
