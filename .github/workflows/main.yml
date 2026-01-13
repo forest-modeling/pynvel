@@ -14,11 +14,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10","3.11"]
-        os: [ubuntu-22.04, windows-2022] #, macos-latest]
-        toolchain:
-          - {compiler: gcc, version: 13}
-          - {compiler: gcc, version: 12}
+        python-version: ["3.10","3.11","3.12","3.13"]
+        os: [ubuntu-latest, windows-latest] #, macos-latest]
+        compiler: [gcc]
+        compiler-version: [13, 15]
+        exclude:
+          - os: windows-latest
+            compiler-version: 15
+          - os: ubuntu-latest
+            compiler-version: 13
 
     steps:
     - name: Checkout
@@ -60,7 +64,7 @@ jobs:
         python -m build --no-isolation
         
     - name: Store Wheel
-      uses: actions/upload-artifact@v4.6.2
+      uses: actions/upload-artifact@v4
       with:
         name: pynvel-${{ runner.os }}-py${{ matrix.python-version }}-wheels
         path: dist/*.whl
@@ -68,7 +72,7 @@ jobs:
         overwrite: true
         
     - name: Store Sdist
-      uses: actions/upload-artifact@v4.6.2
+      uses: actions/upload-artifact@v4
       with:
         name: pynvel-sdist
         path: dist/*.tar.gz
