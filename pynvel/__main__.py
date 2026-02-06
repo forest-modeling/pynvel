@@ -125,6 +125,8 @@ def volume(ctx, species='', dbh=None, height=None, equation=None, form_class=80,
 # TODO: Add option to export in json format
 # TODO: Add option to iterate through a file, database table, etc.
 
+    species = species.upper()
+
     cfg = pynvel.get_config()
     # print(cfg)
     mrule = pynvel.init_merchrule(**cfg.get('merch_rule'))
@@ -225,6 +227,8 @@ def stem_diam(ctx, species='', dbh=None, height=None, equation=None
     Calculate the diameter (inside bark) at a specified upper stem height.
     """
 
+    species = species.upper()
+
     if not (species or equation) or not dbh:
         print('Missing required parameters.')
         print(ctx.get_help())
@@ -279,6 +283,8 @@ def stem_height(ctx, species='', dbh=None, height=None, equation=None
     """
     Calculate the height to specified upper stem diameter (inside bark).
     """
+
+    species = species.upper()
 
     if not (species or equation) or not dbh:
         print('Missing required parameters.')
@@ -339,6 +345,9 @@ def get_equation(
     district='01', product='01',
     fia=True, legacy=False
     ):
+
+    species = species.upper()
+    
     # Convert the species code
     try:
         spp_code = int(species)
