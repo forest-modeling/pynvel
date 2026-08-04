@@ -148,9 +148,9 @@ jobs:
         verbose: true
 
   publish-pypi:
-    name: Publish to PyPI (main branch)
-    # Run on push to main branch or on tag push (for releases)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    name: Publish to PyPI (version tags)
+    # Run on tag push (for releases)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [ make-wheels, make-sdist ]
     runs-on: ubuntu-latest
     environment:
